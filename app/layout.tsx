@@ -15,10 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bug Report & Feature Request",
+  title: "Kreeate - Bug Report & Feature Request",
   description: "Submit bug reports and feature requests with AI-generated GitHub issues",
   icons: {
     icon: "/favicon.svg",
+  },
+  openGraph: {
+    title: "Kreeate - Bug Report & Feature Request",
+    description: "Submit bug reports and feature requests with AI-generated GitHub issues",
+    type: "website",
+    siteName: "Kreeate",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kreeate - Bug Report & Feature Request",
+    description: "Submit bug reports and feature requests with AI-generated GitHub issues",
   },
 };
 
