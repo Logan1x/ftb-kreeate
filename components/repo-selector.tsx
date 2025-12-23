@@ -22,6 +22,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+interface ReposResponse {
+  repos: Repo[]
+  username: string | null | undefined
+}
+
 interface Repo {
   id: number
   name: string
@@ -57,7 +62,7 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
   const uniqueOwners = Array.from(new Set(repos.map(r => r.owner))).sort()
 
   // Filter repos by selected owner
-  const filteredRepos = selectedOwner 
+  const filteredRepos = selectedOwner
     ? repos.filter(r => r.owner === selectedOwner)
     : []
 
@@ -84,16 +89,25 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
         throw new Error("Failed to fetch repositories")
       }
 
-      const data: Repo[] = await response.json()
-      setRepos(data)
+      const data: ReposResponse = await response.json()
+      setRepos(data.repos)
+
+      // Auto-select the user's own repositories by default
+      if (data.username && !selectedOwner) {
+        const userRepos = data.repos.filter(r => r.owner === data.username)
+        if (userRepos.length > 0) {
+          setSelectedOwner(data.username)
+        }
+      }
 
       // Auto-select last repo if available
-      if (lastRepo && data.length > 0) {
-        const matchedRepo = data.find(
+      if (lastRepo && data.repos.length > 0) {
+        const matchedRepo = data.repos.find(
           (r) => r.owner === lastRepo.owner && r.name === lastRepo.name
         )
         if (matchedRepo) {
           onChange({ owner: matchedRepo.owner, name: matchedRepo.name })
+          setSelectedOwner(matchedRepo.owner)
         }
       }
     } catch (err) {
@@ -107,7 +121,7 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
   const handleManualInputChange = (owner: string, repo: string) => {
     setManualOwner(owner)
     setManualRepo(repo)
-    
+
     // Validate both fields are filled
     if (owner && repo) {
       onChange({ owner, name: repo })

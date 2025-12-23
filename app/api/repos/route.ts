@@ -53,7 +53,10 @@ export async function GET() {
       html_url: repo.html_url,
     }))
 
-    return NextResponse.json(simplifiedRepos)
+    return NextResponse.json({
+      repos: simplifiedRepos,
+      username: session.user?.name,
+    })
   } catch (error) {
     console.error("Error fetching repositories:", error)
     return NextResponse.json(
