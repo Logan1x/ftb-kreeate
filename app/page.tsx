@@ -74,7 +74,7 @@ export default function Home() {
 
       const data = await response.json()
       setTitle(data.title)
-      setBody(data.body)
+      setBody("Original issue:\n" + input + "\n\n" + data.body)
       setMessage("Issue generated successfully!")
       setMessageType("success")
       // Collapse describe section and open review section
