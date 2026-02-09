@@ -41,6 +41,7 @@ export default function Home() {
   const [body, setBody] = useState("")
   const [selectedLabel, setSelectedLabel] = useState("P2-Normal")
   const [selectedIssueType, setSelectedIssueType] = useState<(typeof ISSUE_TYPE_PRESETS)[number]["value"]>("bug")
+  const [suggestedPriority, setSuggestedPriority] = useState("")
   const [selectedRepo, setSelectedRepo] = useState<{ owner: string; name: string } | null>(null)
   const [lastRepo, setLastRepo] = useState<{ owner: string; name: string } | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -173,6 +174,10 @@ export default function Home() {
       const data = await response.json()
       setTitle(data.title)
       setBody("Original issue:\n" + input + "\n\n" + data.body)
+      if (data.suggestedPriority) {
+        setSelectedLabel(data.suggestedPriority)
+        setSuggestedPriority(data.suggestedPriority)
+      }
       setGenerationRequestId(data.generationRequestId || "")
       setMessage("Issue generated successfully!")
       setMessageType("success")
@@ -180,6 +185,7 @@ export default function Home() {
     } catch (error) {
       console.error(error)
       setGenerationRequestId("")
+      setSuggestedPriority("")
       setMessage("Failed to generate issue. Please try again.")
       setMessageType("error")
     } finally {
@@ -246,6 +252,7 @@ export default function Home() {
       setTitle("")
       setBody("")
       setGenerationRequestId("")
+      setSuggestedPriority("")
       setSelectedLabel("P2-Normal")
       setOpenAccordion(["describe"])
     } catch (error) {
@@ -480,11 +487,17 @@ export default function Home() {
                       </div>
                       <div className="mb-4">
                         <label className="text-sm font-medium mb-2 block text-white/70">Priority</label>
+                        {suggestedPriority && (
+                          <p className="text-xs text-white/50 mb-2">Auto-suggested: <span className="text-white/75">{suggestedPriority}</span></p>
+                        )}
                         <div className="flex gap-2">
                           {PRIORITY_LABELS.map((label) => (
                             <button
                               key={label.value}
-                              onClick={() => setSelectedLabel(label.value)}
+                              onClick={() => {
+                                setSelectedLabel(label.value)
+                                setSuggestedPriority("")
+                              }}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border cursor-pointer ${selectedLabel === label.value
                                   ? "bg-white/20 text-white border-white/30"
                                   : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white/80"

@@ -14,6 +14,7 @@ const requestSchema = z.object({
 const responseSchema = z.object({
   title: z.string(),
   body: z.string(),
+  suggestedPriority: z.enum(["P0-Unbreak Now", "P1-Must Have", "P2-Normal", "P3-Low Priority"]),
 })
 
 const openai = new OpenAI({
@@ -70,7 +71,8 @@ export async function POST(req: Request) {
             Format:
             {
               "title": string,
-              "body": string
+              "body": string,
+              "suggestedPriority": "P0-Unbreak Now" | "P1-Must Have" | "P2-Normal" | "P3-Low Priority"
             }
 
             Rules:
@@ -80,6 +82,12 @@ export async function POST(req: Request) {
             - Body:
               - One short paragraph summary (2–3 sentences max)
               - Followed by 3–5 simple bullet points using "-"
+            - Priority guidance:
+              - P0-Unbreak Now: production outage, security breach, or critical user path broken
+              - P1-Must Have: major functionality broken or a release blocker
+              - P2-Normal: meaningful improvement or non-blocking bug
+              - P3-Low Priority: minor polish, cleanup, or low-impact request
+            - Always return exactly one suggestedPriority value from the allowed list
             - No sections like Goals, Acceptance Criteria, Notes
             - Do not invent process, metrics, approvals, or team coordination
             - Keep it minimal. The user will add details later.
@@ -135,6 +143,7 @@ export async function POST(req: Request) {
           issueType,
           generatedTitleLength: validResponse.title.length,
           generatedBodyLength: validResponse.body.length,
+          suggestedPriority: validResponse.suggestedPriority,
         },
     })
 
