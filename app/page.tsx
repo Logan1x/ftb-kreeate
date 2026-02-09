@@ -18,6 +18,12 @@ const PRIORITY_LABELS = [
   { value: "P3-Low Priority", label: "P3", color: "bg-blue-500", description: "Low Priority" },
 ] as const
 
+const ISSUE_TYPE_PRESETS = [
+  { value: "bug", label: "Bug", description: "Fix broken behavior" },
+  { value: "feature", label: "Feature", description: "Add new capability" },
+  { value: "task", label: "Task", description: "Maintenance and chores" },
+] as const
+
 interface RecentIssue {
   id: number
   number: number
@@ -34,6 +40,7 @@ export default function Home() {
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
   const [selectedLabel, setSelectedLabel] = useState("P2-Normal")
+  const [selectedIssueType, setSelectedIssueType] = useState<(typeof ISSUE_TYPE_PRESETS)[number]["value"]>("bug")
   const [selectedRepo, setSelectedRepo] = useState<{ owner: string; name: string } | null>(null)
   const [lastRepo, setLastRepo] = useState<{ owner: string; name: string } | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -156,7 +163,7 @@ export default function Home() {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ input, issueType: selectedIssueType }),
       })
 
       if (!response.ok) {
@@ -394,6 +401,25 @@ export default function Home() {
                     <p className="text-white/50 text-sm mb-4">
                       Provide a detailed description of the bug or feature request.
                     </p>
+                    <div className="mb-4">
+                      <label className="text-sm font-medium mb-2 block text-white/70">Issue type</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {ISSUE_TYPE_PRESETS.map((type) => (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => setSelectedIssueType(type.value)}
+                            className={`rounded-xl border px-3 py-2 text-left transition-colors cursor-pointer ${selectedIssueType === type.value
+                              ? "border-white/35 bg-white/20 text-white"
+                              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                              }`}
+                          >
+                            <p className="text-sm font-medium">{type.label}</p>
+                            <p className="text-xs text-white/45 mt-0.5">{type.description}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <Textarea
                       placeholder="Describe the bug or feature request in plain English..."
                       value={input}

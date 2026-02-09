@@ -7,6 +7,7 @@ import { createIssueContentLog, trackEvent } from "@/lib/analytics"
 // Schema for validating the request body
 const requestSchema = z.object({
   input: z.string().min(1, "Input cannot be empty").max(5000, "Input is too long"),
+  issueType: z.enum(["bug", "feature", "task"]).default("bug"),
 })
 
 // Schema for validating the AI response
@@ -38,16 +39,24 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json()
-    const { input } = requestSchema.parse(json)
+    const { input, issueType } = requestSchema.parse(json)
+
+    const issueTypeInstruction =
+      issueType === "bug"
+        ? "Focus on observed behavior and impact. Include reproducible context when available."
+        : issueType === "feature"
+          ? "Focus on user value and expected outcome. Keep scope concrete and implementation-neutral."
+          : "Focus on maintenance or operational work with clear expected result."
 
     await trackEvent({
       userId: session.user.id,
       eventType: "issue_generate",
       status: "requested",
-      metadata: {
-        inputLength: input.length,
-      },
-    })
+        metadata: {
+          inputLength: input.length,
+          issueType,
+        },
+      })
 
     const completion = await openai.chat.completions.create({
       model: 'openai/gpt-oss-safeguard-20b',
@@ -65,6 +74,8 @@ export async function POST(req: Request) {
             }
 
             Rules:
+            - Issue Type: ${issueType}
+            - Type Guidance: ${issueTypeInstruction}
             - Title: concise, actionable, max 80 characters
             - Body:
               - One short paragraph summary (2–3 sentences max)
@@ -118,12 +129,13 @@ export async function POST(req: Request) {
       eventType: "issue_generate",
       status: "success",
       latencyMs: Date.now() - startedAt,
-      metadata: {
-        model: "openai/gpt-oss-safeguard-20b",
-        inputLength: input.length,
-        generatedTitleLength: validResponse.title.length,
-        generatedBodyLength: validResponse.body.length,
-      },
+        metadata: {
+          model: "openai/gpt-oss-safeguard-20b",
+          inputLength: input.length,
+          issueType,
+          generatedTitleLength: validResponse.title.length,
+          generatedBodyLength: validResponse.body.length,
+        },
     })
 
     return NextResponse.json({
