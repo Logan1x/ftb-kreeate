@@ -89,6 +89,7 @@ export const userPreferences = pgTable("user_preferences", {
     .references(() => users.id, { onDelete: "cascade" }),
   lastRepoOwner: text("lastRepoOwner"),
   lastRepoName: text("lastRepoName"),
+  pinnedRepos: jsonb("pinnedRepos").$type<Array<{ owner: string; name: string }>>().default([]).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().notNull(),
 })

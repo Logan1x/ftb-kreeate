@@ -18,6 +18,14 @@ const PRIORITY_LABELS = [
   { value: "P3-Low Priority", label: "P3", color: "bg-blue-500", description: "Low Priority" },
 ] as const
 
+const ISSUE_TYPE_PRESETS = [
+  { value: "bug", label: "Bug" },
+  { value: "feature", label: "Feature" },
+  { value: "task", label: "Task" },
+] as const
+
+const LOCAL_SELECTED_REPO_KEY = "kreeate:selected-repo"
+
 interface RecentIssue {
   id: number
   number: number
@@ -28,14 +36,22 @@ interface RecentIssue {
   repoFullName: string
 }
 
+interface PinnedRepo {
+  owner: string
+  name: string
+}
+
 export default function Home() {
   const { data: session, status } = useSession()
   const [input, setInput] = useState("")
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
   const [selectedLabel, setSelectedLabel] = useState("P2-Normal")
+  const [selectedIssueType, setSelectedIssueType] = useState<(typeof ISSUE_TYPE_PRESETS)[number]["value"]>("bug")
+  const [suggestedPriority, setSuggestedPriority] = useState("")
   const [selectedRepo, setSelectedRepo] = useState<{ owner: string; name: string } | null>(null)
   const [lastRepo, setLastRepo] = useState<{ owner: string; name: string } | null>(null)
+  const [pinnedRepos, setPinnedRepos] = useState<PinnedRepo[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<string | React.ReactNode>("")
@@ -54,10 +70,36 @@ export default function Home() {
 
   useEffect(() => {
     if (session) {
+      try {
+        const savedRepo = window.localStorage.getItem(LOCAL_SELECTED_REPO_KEY)
+        if (savedRepo) {
+          const parsed = JSON.parse(savedRepo) as { owner?: string; name?: string }
+          if (parsed.owner && parsed.name) {
+            setSelectedRepo({ owner: parsed.owner, name: parsed.name })
+          }
+        }
+      } catch (error) {
+        console.error("Failed to restore local repository selection:", error)
+      }
+
       fetchUserPreferences()
       fetchRecentIssues()
     }
   }, [session])
+
+  useEffect(() => {
+    if (!session) return
+
+    try {
+      if (selectedRepo) {
+        window.localStorage.setItem(LOCAL_SELECTED_REPO_KEY, JSON.stringify(selectedRepo))
+      } else {
+        window.localStorage.removeItem(LOCAL_SELECTED_REPO_KEY)
+      }
+    } catch (error) {
+      console.error("Failed to persist local repository selection:", error)
+    }
+  }, [selectedRepo, session])
 
   const fetchUserPreferences = async () => {
     try {
@@ -66,6 +108,9 @@ export default function Home() {
         const data = await response.json()
         if (data.lastRepo) {
           setLastRepo(data.lastRepo)
+        }
+        if (Array.isArray(data.pinnedRepos)) {
+          setPinnedRepos(data.pinnedRepos)
         }
       }
     } catch (error) {
@@ -156,7 +201,7 @@ export default function Home() {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ input, issueType: selectedIssueType }),
       })
 
       if (!response.ok) {
@@ -166,6 +211,10 @@ export default function Home() {
       const data = await response.json()
       setTitle(data.title)
       setBody("Original issue:\n" + input + "\n\n" + data.body)
+      if (data.suggestedPriority) {
+        setSelectedLabel(data.suggestedPriority)
+        setSuggestedPriority(data.suggestedPriority)
+      }
       setGenerationRequestId(data.generationRequestId || "")
       setMessage("Issue generated successfully!")
       setMessageType("success")
@@ -173,6 +222,7 @@ export default function Home() {
     } catch (error) {
       console.error(error)
       setGenerationRequestId("")
+      setSuggestedPriority("")
       setMessage("Failed to generate issue. Please try again.")
       setMessageType("error")
     } finally {
@@ -239,6 +289,7 @@ export default function Home() {
       setTitle("")
       setBody("")
       setGenerationRequestId("")
+      setSuggestedPriority("")
       setSelectedLabel("P2-Normal")
       setOpenAccordion(["describe"])
     } catch (error) {
@@ -394,6 +445,24 @@ export default function Home() {
                     <p className="text-white/50 text-sm mb-4">
                       Provide a detailed description of the bug or feature request.
                     </p>
+                    <div className="mb-4">
+                      <label className="text-sm font-medium mb-2 block text-white/70">Issue type</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {ISSUE_TYPE_PRESETS.map((type) => (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => setSelectedIssueType(type.value)}
+                            className={`w-full rounded-lg border px-2.5 py-1.5 text-center transition-colors cursor-pointer ${selectedIssueType === type.value
+                              ? "border-white/35 bg-white/20 text-white"
+                              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                              }`}
+                          >
+                            <p className="text-xs font-semibold leading-tight">{type.label}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <Textarea
                       placeholder="Describe the bug or feature request in plain English..."
                       value={input}
@@ -450,15 +519,23 @@ export default function Home() {
                           value={selectedRepo}
                           onChange={setSelectedRepo}
                           lastRepo={lastRepo}
+                          pinnedRepos={pinnedRepos}
+                          onPinnedReposChange={setPinnedRepos}
                         />
                       </div>
                       <div className="mb-4">
                         <label className="text-sm font-medium mb-2 block text-white/70">Priority</label>
+                        {suggestedPriority && (
+                          <p className="text-xs text-white/50 mb-2">Auto-suggested: <span className="text-white/75">{suggestedPriority}</span></p>
+                        )}
                         <div className="flex gap-2">
                           {PRIORITY_LABELS.map((label) => (
                             <button
                               key={label.value}
-                              onClick={() => setSelectedLabel(label.value)}
+                              onClick={() => {
+                                setSelectedLabel(label.value)
+                                setSuggestedPriority("")
+                              }}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border cursor-pointer ${selectedLabel === label.value
                                   ? "bg-white/20 text-white border-white/30"
                                   : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white/80"

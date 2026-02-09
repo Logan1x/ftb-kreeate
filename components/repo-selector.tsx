@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Pin, PinOff } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -40,9 +40,11 @@ interface RepoSelectorProps {
   value: { owner: string; name: string } | null
   onChange: (repo: { owner: string; name: string } | null) => void
   lastRepo?: { owner: string; name: string } | null
+  pinnedRepos?: Array<{ owner: string; name: string }>
+  onPinnedReposChange?: (repos: Array<{ owner: string; name: string }>) => void
 }
 
-export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
+export function RepoSelector({ value, onChange, lastRepo, pinnedRepos = [], onPinnedReposChange }: RepoSelectorProps) {
   const [mode, setMode] = useState<"dropdown" | "manual">("dropdown")
   const [repos, setRepos] = useState<Repo[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -52,6 +54,8 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
   const [selectedOwner, setSelectedOwner] = useState<string | null>(null)
   const [openOwner, setOpenOwner] = useState(false)
   const [openRepo, setOpenRepo] = useState(false)
+  const [pinned, setPinned] = useState<Array<{ owner: string; name: string }>>(pinnedRepos)
+  const [isSavingPinned, setIsSavingPinned] = useState(false)
 
   // Fetch repos on mount
   useEffect(() => {
@@ -75,6 +79,10 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
       setSelectedOwner(lastRepo.owner)
     }
   }, [lastRepo])
+
+  useEffect(() => {
+    setPinned(pinnedRepos)
+  }, [pinnedRepos])
 
   const fetchRepos = async () => {
     setIsLoading(true)
@@ -144,6 +152,42 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
     }
   }
 
+  const isRepoPinned = (owner: string, name: string) => {
+    return pinned.some((repo) => repo.owner === owner && repo.name === name)
+  }
+
+  const persistPinnedRepo = async (action: "pin" | "unpin", repo: { owner: string; name: string }) => {
+    setIsSavingPinned(true)
+    try {
+      const response = await fetch("/api/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, repo }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update pinned repos")
+      }
+
+      const data = await response.json()
+      const nextPinned = Array.isArray(data.pinnedRepos) ? data.pinnedRepos : []
+      setPinned(nextPinned)
+      onPinnedReposChange?.(nextPinned)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsSavingPinned(false)
+    }
+  }
+
+  const handlePinnedRepoSelect = (repo: { owner: string; name: string }) => {
+    setSelectedOwner(repo.owner)
+    onChange(repo)
+    if (mode !== "dropdown") {
+      setMode("dropdown")
+    }
+  }
+
   return (
     <div className="space-y-3 w-full">
       <div className="flex items-center justify-between">
@@ -186,9 +230,26 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
             Loading repositories...
           </div>
         ) : repos.length > 0 ? (
-          <div className="flex gap-2">
-            {/* Owner/Username Selector */}
-            <Popover open={openOwner} onOpenChange={setOpenOwner}>
+          <div className="space-y-2">
+            {pinned.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {pinned.map((repo) => (
+                  <button
+                    key={`${repo.owner}/${repo.name}`}
+                    type="button"
+                    onClick={() => handlePinnedRepoSelect(repo)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 text-xs text-white/85 hover:bg-white/15 cursor-pointer"
+                  >
+                    <Pin className="h-3 w-3" />
+                    <span className="font-mono">{repo.owner}/{repo.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              {/* Owner/Username Selector */}
+              <Popover open={openOwner} onOpenChange={setOpenOwner}>
               <PopoverTrigger className="flex-1">
                 <div
                   role="combobox"
@@ -227,10 +288,10 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
                   </CommandList>
                 </Command>
               </PopoverContent>
-            </Popover>
+              </Popover>
 
-            {/* Repository Selector */}
-            <Popover open={openRepo} onOpenChange={setOpenRepo}>
+              {/* Repository Selector */}
+              <Popover open={openRepo} onOpenChange={setOpenRepo}>
               <PopoverTrigger className="flex-1">
                 <div
                   role="combobox"
@@ -279,7 +340,8 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
                   </Command>
                 </PopoverContent>
               )}
-            </Popover>
+              </Popover>
+            </div>
           </div>
         ) : (
           <div className="text-sm text-muted-foreground">
@@ -304,9 +366,34 @@ export function RepoSelector({ value, onChange, lastRepo }: RepoSelectorProps) {
       )}
 
       {value && (
-        <p className="text-xs text-white/40">
-          Selected: <span className="font-mono text-white/70">{value.owner}/{value.name}</span>
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-white/40">
+            Selected: <span className="font-mono text-white/70">{value.owner}/{value.name}</span>
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isSavingPinned}
+            onClick={() => {
+              const action = isRepoPinned(value.owner, value.name) ? "unpin" : "pin"
+              void persistPinnedRepo(action, value)
+            }}
+            className="h-7 px-2 text-xs text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+          >
+            {isRepoPinned(value.owner, value.name) ? (
+              <>
+                <PinOff className="h-3.5 w-3.5 mr-1" />
+                Unpin
+              </>
+            ) : (
+              <>
+                <Pin className="h-3.5 w-3.5 mr-1" />
+                Pin
+              </>
+            )}
+          </Button>
+        </div>
       )}
     </div>
   )
