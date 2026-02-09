@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { userPreferences } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
 import { attachSubmitDataToIssueContentLog, createIssueContentLog, trackEvent } from "@/lib/analytics"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 // Schema for validating the request body
 const requestSchema = z.object({
@@ -26,6 +27,38 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Unauthorized. Please sign in with GitHub." },
         { status: 401 }
+      )
+    }
+
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+    const submitRateLimit = checkRateLimit({
+      key: `submit:${session.user.id}:${clientIp}`,
+      limit: 30,
+      windowMs: 10 * 60 * 1000,
+    })
+
+    if (!submitRateLimit.allowed) {
+      await trackEvent({
+        userId: session.user.id,
+        eventType: "issue_submit",
+        status: "failed",
+        errorCode: "rate_limited",
+        metadata: {
+          retryAfterSeconds: submitRateLimit.retryAfterSeconds,
+        },
+      })
+
+      return NextResponse.json(
+        {
+          error: "Too many submit requests. Please try again shortly.",
+          retryAfterSeconds: submitRateLimit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(submitRateLimit.retryAfterSeconds),
+          },
+        }
       )
     }
 

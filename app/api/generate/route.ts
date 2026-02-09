@@ -3,6 +3,7 @@ import { z } from "zod"
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createIssueContentLog, trackEvent } from "@/lib/analytics"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 // Schema for validating the request body
 const requestSchema = z.object({
@@ -36,6 +37,38 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Unauthorized. Please sign in with GitHub." },
         { status: 401 }
+      )
+    }
+
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+    const generateRateLimit = checkRateLimit({
+      key: `generate:${session.user.id}:${clientIp}`,
+      limit: 20,
+      windowMs: 10 * 60 * 1000,
+    })
+
+    if (!generateRateLimit.allowed) {
+      await trackEvent({
+        userId: session.user.id,
+        eventType: "issue_generate",
+        status: "failed",
+        errorCode: "rate_limited",
+        metadata: {
+          retryAfterSeconds: generateRateLimit.retryAfterSeconds,
+        },
+      })
+
+      return NextResponse.json(
+        {
+          error: "Too many generation requests. Please try again shortly.",
+          retryAfterSeconds: generateRateLimit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(generateRateLimit.retryAfterSeconds),
+          },
+        }
       )
     }
 
