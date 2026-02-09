@@ -34,6 +34,11 @@ interface RecentIssue {
   repoFullName: string
 }
 
+interface PinnedRepo {
+  owner: string
+  name: string
+}
+
 export default function Home() {
   const { data: session, status } = useSession()
   const [input, setInput] = useState("")
@@ -44,6 +49,7 @@ export default function Home() {
   const [suggestedPriority, setSuggestedPriority] = useState("")
   const [selectedRepo, setSelectedRepo] = useState<{ owner: string; name: string } | null>(null)
   const [lastRepo, setLastRepo] = useState<{ owner: string; name: string } | null>(null)
+  const [pinnedRepos, setPinnedRepos] = useState<PinnedRepo[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<string | React.ReactNode>("")
@@ -74,6 +80,9 @@ export default function Home() {
         const data = await response.json()
         if (data.lastRepo) {
           setLastRepo(data.lastRepo)
+        }
+        if (Array.isArray(data.pinnedRepos)) {
+          setPinnedRepos(data.pinnedRepos)
         }
       }
     } catch (error) {
@@ -483,6 +492,8 @@ export default function Home() {
                           value={selectedRepo}
                           onChange={setSelectedRepo}
                           lastRepo={lastRepo}
+                          pinnedRepos={pinnedRepos}
+                          onPinnedReposChange={setPinnedRepos}
                         />
                       </div>
                       <div className="mb-4">
