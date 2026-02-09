@@ -17,7 +17,7 @@ const responseSchema = z.object({
 })
 
 const primaryModel = process.env.OPENROUTER_PRIMARY_MODEL ?? "openai/gpt-oss-safeguard-20b"
-const fallbackModel = process.env.OPENROUTER_FALLBACK_MODEL ?? "openai/gpt-4o-mini"
+const fallbackModel = process.env.OPENROUTER_FALLBACK_MODEL ?? "deepseek/deepseek-v3.2"
 
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
