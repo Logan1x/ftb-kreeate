@@ -269,7 +269,7 @@ export default function Home() {
           <div className="flex items-center gap-1.5 group cursor-default">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-105">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" transform="rotate(15)" className="text-white">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M12 4a4 4 0 0 1 3.995 3.8l.005 .2a1 1 0 0 1 .428 .096l3.033 -1.938a1 1 0 1 1 1.078 1.684l-3.015 1.931a7.17 7.17 0 0 1 .476 2.227h3a1 1 0 0 1 0 2h-3v1a6.01 6.01 0 0 1 -.195 1.525l2.708 1.616a1 1 0 1 1 -1.026 1.718l-2.514 -1.501a6.002 6.002 0 0 1 -3.973 2.56v-5.918a1 1 0 0 0 -2 0v5.917a6.002 6.002 0 0 1 -3.973 -2.56l-2.514 1.503a1 1 0 1 1 -1.026 -1.718l2.708 -1.616a6.01 6.01 0 0 1 -.195 -1.526v-1h-3a1 1 0 0 1 0 -2h3.001v-.055a7 7 0 0 1 .474 -2.173l-3.014 -1.93a1 1 0 1 1 1.078 -1.684l3.032 1.939l.024 -.012l.068 -.027l.019 -.005l.016 -.006l.032 -.008l.04 -.013l.034 -.007l.034 -.004l.045 -.008l.015 -.001l.015 -.002l.087 -.004a4 4 0 0 1 4 -4zm0 2a2 2 0 0 0 -2 2h4a2 2 0 0 0 -2 -2z" />
               </svg>
             </div>
@@ -314,10 +314,10 @@ export default function Home() {
                   Writing issues<br />
                   <span className="text-white/50">sucks.</span>
                 </h1>
-                  <p className="text-xl md:text-2xl text-white/60 max-w-xl mx-auto leading-relaxed font-medium">
-                    Describe it in plain English. <br />
-                    Get a perfectly formatted bug report or feature request.
-                  </p>
+                <p className="text-xl md:text-2xl text-white/60 max-w-xl mx-auto leading-relaxed font-medium">
+                  Describe it in plain English. <br />
+                  Get a perfectly formatted bug report or feature request.
+                </p>
               </div>
 
               <div className="w-full max-w-md mx-auto animate-in fade-in zoom-in duration-1000 delay-200 fill-mode-both pt-4">
@@ -359,14 +359,12 @@ export default function Home() {
               </div>
 
               <div className="flex items-center justify-center gap-2 mb-8">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
-                  openAccordion.includes("review")
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${openAccordion.includes("review")
                     ? "bg-white/10 text-white/80 border border-white/20"
                     : "bg-white/5 text-white/40 border border-white/5"
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    openAccordion.includes("review") ? "bg-white" : "bg-white/30"
-                  }`} />
+                  }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${openAccordion.includes("review") ? "bg-white" : "bg-white/30"
+                    }`} />
                   {openAccordion.includes("review") ? "Generated" : "Drafting"}
                 </span>
                 {selectedRepo && (
@@ -461,11 +459,10 @@ export default function Home() {
                             <button
                               key={label.value}
                               onClick={() => setSelectedLabel(label.value)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border cursor-pointer ${
-                                selectedLabel === label.value
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border cursor-pointer ${selectedLabel === label.value
                                   ? "bg-white/20 text-white border-white/30"
                                   : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white/80"
-                              }`}
+                                }`}
                             >
                               <span className={`w-2 h-2 rounded-full ${label.color}`} />
                               {label.label}
@@ -533,7 +530,7 @@ export default function Home() {
                       size="icon"
                       onClick={() => scrollRecentIssues("left")}
                       disabled={!canScrollLeft}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/35 text-white hover:bg-white hover:text-black rounded-full h-9 w-9 cursor-pointer transition-all disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/70"
+                      className="absolute left-2 top-[40%] -translate-y-1/2 z-10 bg-white/35 text-white hover:bg-white hover:text-black rounded-full h-9 w-9 cursor-pointer transition-all disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/70"
                     >
                       <IconChevronLeft className="h-4 w-4" />
                     </Button>
@@ -542,7 +539,7 @@ export default function Home() {
                       size="icon"
                       onClick={() => scrollRecentIssues("right")}
                       disabled={!canScrollRight}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/35 text-white hover:bg-white hover:text-black rounded-full h-9 w-9 cursor-pointer transition-all disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/70"
+                      className="absolute right-2 top-[40%] -translate-y-1/2 z-10 bg-white/35 text-white hover:bg-white hover:text-black rounded-full h-9 w-9 cursor-pointer transition-all disabled:cursor-not-allowed disabled:bg-white/20 disabled:text-white/70"
                     >
                       <IconChevronRight className="h-4 w-4" />
                     </Button>
@@ -551,24 +548,24 @@ export default function Home() {
                       className="overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
                       <div className="flex gap-3 snap-x snap-mandatory px-12">
-                      {recentIssues.map((issue) => (
-                        <a
-                          key={issue.url}
-                          href={issue.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="snap-start min-w-[260px] max-w-[320px] flex-1 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors p-4"
-                        >
-                          <p className="text-xs text-white/50 mb-2 font-mono truncate">{issue.repoFullName} #{issue.number}</p>
-                          <p className="text-sm text-white leading-snug max-h-10 overflow-hidden mb-2">{issue.title}</p>
-                          <div className="flex items-center justify-between text-xs">
-                            <span className={`inline-flex px-2 py-0.5 rounded-full ${issue.state === "open" ? "bg-emerald-500/20 text-emerald-300" : "bg-zinc-500/30 text-zinc-200"}`}>
-                              {issue.state}
-                            </span>
-                            <span className="text-white/45">{formatIssueDate(issue.createdAt)}</span>
-                          </div>
-                        </a>
-                      ))}
+                        {recentIssues.map((issue) => (
+                          <a
+                            key={issue.url}
+                            href={issue.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="snap-start min-w-[260px] max-w-[320px] flex-1 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors p-4 flex flex-col"
+                          >
+                            <p className="text-xs text-white/50 mb-2 font-mono truncate">{issue.repoFullName} #{issue.number}</p>
+                            <p className="text-sm text-white leading-snug max-h-10 overflow-hidden mb-2">{issue.title}</p>
+                            <div className="mt-auto pt-2 flex items-center justify-between text-xs">
+                              <span className={`inline-flex px-2 py-0.5 rounded-full ${issue.state === "open" ? "bg-emerald-500/20 text-emerald-300" : "bg-zinc-500/30 text-zinc-200"}`}>
+                                {issue.state}
+                              </span>
+                              <span className="text-white/45">{formatIssueDate(issue.createdAt)}</span>
+                            </div>
+                          </a>
+                        ))}
                       </div>
                     </div>
                     {carouselPageCount > 1 && (
