@@ -42,6 +42,7 @@ export default function Home() {
   const [messageType, setMessageType] = useState<"success" | "error">("success")
   const [openAccordion, setOpenAccordion] = useState<string[]>(["describe"])
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [generationRequestId, setGenerationRequestId] = useState("")
   const [recentIssues, setRecentIssues] = useState<RecentIssue[]>([])
   const [isLoadingRecentIssues, setIsLoadingRecentIssues] = useState(false)
   const [recentIssuesError, setRecentIssuesError] = useState("")
@@ -165,11 +166,13 @@ export default function Home() {
       const data = await response.json()
       setTitle(data.title)
       setBody("Original issue:\n" + input + "\n\n" + data.body)
+      setGenerationRequestId(data.generationRequestId || "")
       setMessage("Issue generated successfully!")
       setMessageType("success")
       setOpenAccordion(["review"])
     } catch (error) {
       console.error(error)
+      setGenerationRequestId("")
       setMessage("Failed to generate issue. Please try again.")
       setMessageType("error")
     } finally {
@@ -193,6 +196,7 @@ export default function Home() {
           label: selectedLabel,
           repoOwner: selectedRepo.owner,
           repoName: selectedRepo.name,
+          generationRequestId: generationRequestId || undefined,
         }),
       })
 
@@ -234,6 +238,7 @@ export default function Home() {
       setInput("")
       setTitle("")
       setBody("")
+      setGenerationRequestId("")
       setSelectedLabel("P2-Normal")
       setOpenAccordion(["describe"])
     } catch (error) {
