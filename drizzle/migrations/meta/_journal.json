@@ -29,6 +29,13 @@
       "when": 1771005600000,
       "tag": "0004_add_account_expires_at",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771009200000,
+      "tag": "0005_relax_legacy_auth_not_nulls",
+      "breakpoints": true
     }
   ]
 }
